@@ -1,0 +1,16 @@
+{
+  "title": "Борщ",
+  "description": "Описание",
+  "cuisine": "pervoey",
+  "ingredients": [
+      {
+          "name": "apple",
+          "quantity": 1.0,
+          "unit": "sht"
+      }
+  ],
+  "steps": [
+      "perviy shag"
+  ],
+  "photo": "https://adygsalt.ru/blog/foto/borsh/3.jpg"
+}
