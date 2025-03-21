@@ -57,22 +57,34 @@ const getRecipeForId = async (req, res) => {
 
 /**
  * @route POST /api/recipes/search
- * @desc Поиск рецептов
+ * @desc Искать рецепт
  * @access Public
  */
-
-const searchRecipe = async (req, res) => {
+const searchRecipes = async (req, res) => {
+  const { cuisine, ingredients } = req.query;
 
   try {
+    const query = {};
+    if (cuisine) {
+      query.cuisine = cuisine;
+    }
+    if (ingredients && ingredients.length > 0) {
+      query.ingredients = {
+        $elemMatch: {
+          name: { $in: ingredients },
+        },
+      };
+    }
+    const recipes = await Recipe.find(query);
 
     return res.status(200).json({
-      message: "Рецепты найдены",
+      message: `Рецептов найдено: ${recipes.length}`,
+      recipes,
     });
   } catch (err) {
-    console.log(err);
     return res.status(500).json({
-      message: "Возникла ошибка на сервере!",
-      err: err.message,
+      message: "Возникла непредвиденная ошибка на сервере!",
+      err,
     });
   }
 };
@@ -197,5 +209,5 @@ module.exports = {
   addRecipe,
   editRecipe,
   deleteRecipe,
-  searchRecipe,
+  searchRecipes,
 };

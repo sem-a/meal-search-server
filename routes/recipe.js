@@ -6,17 +6,17 @@ const {
   getRecipeForId,
   editRecipe,
   deleteRecipe,
-  searchRecipe,
+  searchRecipes,
 } = require("../controllers/recipe");
 
 // api/recipes/
 router.get("/", getAllRecipes);
 
-// api/recipes/:id
-router.get("/:id", getRecipeForId);
+// api/recipes/get/:id
+router.get("/get/:id", getRecipeForId);
 
 // api/recipes/search
-router.get("/search", searchRecipe);
+router.get("/search", searchRecipes);
 
 // api/recipes/add
 router.post("/add", addRecipe);
