@@ -1,4 +1,4 @@
-const { prisma } = require("../prisma/prisma-client");
+const { Recipe } = require("../mongoose/model");
 
 /**
  * @route GET /api/recipes/
@@ -7,8 +7,11 @@ const { prisma } = require("../prisma/prisma-client");
  */
 const getAllRecipes = async (req, res) => {
   try {
+    const recipes = await Recipe.find();
+
     return res.status(200).json({
-      message: "Рецепты получены",
+      message: "Рецепты успешно получены!",
+      recipes,
     });
   } catch (err) {
     return res.status(500).json({
@@ -25,11 +28,48 @@ const getAllRecipes = async (req, res) => {
  */
 
 const getRecipeForId = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "ID рецепта отсутствует" });
+  }
+
   try {
+    const recipe = await Recipe.findById(id);
+
+    if (!recipe) {
+      return res.status(404).json({
+        message: "Рецепта с таким ID не существует",
+      });
+    }
+
     return res.status(200).json({
-      message: "Рецепт получен по айди",
+      message: "Рецепт успешно получен!",
+      recipes: recipe,
     });
   } catch (err) {
+    return res.status(500).json({
+      message: "Возникла ошибка на сервере!",
+      err: err.message,
+    });
+  }
+};
+
+/**
+ * @route POST /api/recipes/search
+ * @desc Поиск рецептов
+ * @access Public
+ */
+
+const searchRecipe = async (req, res) => {
+
+  try {
+
+    return res.status(200).json({
+      message: "Рецепты найдены",
+    });
+  } catch (err) {
+    console.log(err);
     return res.status(500).json({
       message: "Возникла ошибка на сервере!",
       err: err.message,
@@ -53,22 +93,23 @@ const addRecipe = async (req, res) => {
   }
 
   try {
-    const recipe = await prisma.recipe.create({
-      data: {
-        title,
-        description,
-        cuisine,
-        ingredients,
-        steps,
-        photo,
-      },
+    const recipe = new Recipe({
+      title,
+      description,
+      cuisine,
+      ingredients,
+      steps,
+      photo,
     });
+
+    await recipe.save();
+
     return res.status(201).json({
       message: "Рецепт успешно добавлен",
       recipe,
     });
   } catch (err) {
-    console.log(err)
+    console.log(err);
     return res.status(500).json({
       message: "Возникла ошибка на сервере!",
       err: err.message,
@@ -83,9 +124,30 @@ const addRecipe = async (req, res) => {
  */
 
 const editRecipe = async (req, res) => {
+  const { id } = req.params;
+
+  const body = req.body;
+
+  if (!id) {
+    return res.status(400).json({ message: "ID рецепта отсутствует" });
+  }
+
   try {
+    const recipe = await Recipe.findById(id);
+
+    if (!recipe) {
+      return res.status(404).json({
+        message: "Рецепта с таким ID не существует",
+      });
+    }
+
+    Object.assign(recipe, body);
+
+    await recipe.save();
+
     return res.status(200).json({
       message: "Рецепт успешно изменен",
+      recipes: recipe,
     });
   } catch (err) {
     return res.status(500).json({
@@ -102,9 +164,24 @@ const editRecipe = async (req, res) => {
  */
 
 const deleteRecipe = async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "ID рецепта отсутствует" });
+  }
+
   try {
+    const recipe = await Recipe.findByIdAndDelete(id);
+
+    if (!recipe) {
+      return res.status(404).json({
+        message: "Рецепта с таким ID не существует",
+      });
+    }
+
     return res.status(200).json({
       message: "Рецепт успешно удален",
+      recipes: recipe,
     });
   } catch (err) {
     return res.status(500).json({
@@ -120,4 +197,5 @@ module.exports = {
   addRecipe,
   editRecipe,
   deleteRecipe,
+  searchRecipe,
 };
