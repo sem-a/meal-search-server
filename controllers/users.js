@@ -1,4 +1,3 @@
-const { prisma } = require("../prisma/prisma-client");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { User } = require("../mongoose/model");

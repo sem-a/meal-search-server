@@ -1,4 +1,4 @@
-const { prisma } = require("../prisma/prisma-client");
+const { User } = require("../mongoose/model");
 const jwt = require("jsonwebtoken");
 
 const auth = async (req, res, next) => {
@@ -14,11 +14,7 @@ const auth = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await prisma.users.findUnique({
-      where: {
-        id: decoded.id,
-      },
-    });
+    const user = await User.findById(decoded.id);
 
     req.user = user;
 

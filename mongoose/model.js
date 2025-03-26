@@ -13,12 +13,14 @@ const recipeSchema = new mongoose.Schema({
   ],
   steps: [{ type: String, required: true }],
   photo: { type: String },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 });
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   password: { type: String, required: true },
+  recipes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Recipe" }],
 });
 
 const Recipe = mongoose.model("Recipe", recipeSchema);

@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 app.use("/api/", require("./routes/index"));
 app.use("/api/recipes/", require("./routes/recipes"));
-app.use("/api/users/", require('./routes/'))
+app.use("/api/users/", require("./routes/users"));
 
 mongoose
   .connect(process.env.DB_URI)
