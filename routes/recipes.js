@@ -9,7 +9,6 @@ const {
   searchRecipes,
   getRecipesForUserId,
 } = require("../controllers/recipes");
-const { auth } = require("../middleware/auth");
 
 // api/recipes/
 router.get("/", getAllRecipes);
@@ -18,18 +17,18 @@ router.get("/", getAllRecipes);
 router.get("/get/:id", getRecipeForId);
 
 // api/recipes/user/
-router.get("/user/", auth, getRecipesForUserId);
+router.get("/user/", getRecipesForUserId);
 
 // api/recipes/search
 router.get("/search", searchRecipes);
 
 // api/recipes/add
-router.post("/add", auth, addRecipe);
+router.post("/add", addRecipe);
 
 // api/recipes/edit/:id
-router.put("/edit", auth, editRecipe);
+router.put("/edit", editRecipe);
 
 // api/recipes/delete/:id
-router.delete("/delete/:id", auth, deleteRecipe);
+router.delete("/delete/:id", deleteRecipe);
 
 module.exports = router;

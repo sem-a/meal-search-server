@@ -117,17 +117,7 @@ const searchRecipes = async (req, res) => {
 const addRecipe = async (req, res) => {
   const { title, description, cuisine, ingredients, steps, photo } = req.body;
 
-  const id = req.user.id;
-
-  if (
-    !id ||
-    !title ||
-    !description ||
-    !cuisine ||
-    !ingredients ||
-    !steps ||
-    !photo
-  ) {
+  if (!title || !description || !cuisine || !ingredients || !steps || !photo) {
     return res
       .status(400)
       .json({ message: "Заполните все обязательные поля!" });
@@ -147,7 +137,6 @@ const addRecipe = async (req, res) => {
       }),
       steps: steps.map((item) => item.toLowerCase()),
       photo: photo.toLowerCase(),
-      user: id,
     });
 
     await recipe.save();

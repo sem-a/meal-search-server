@@ -7,7 +7,6 @@ const auth = async (req, res, next) => {
 
     if (!token) {
       return res.status(401).json({
-        success: false,
         message: "Пользователь не авторизован!",
       });
     }
@@ -21,7 +20,6 @@ const auth = async (req, res, next) => {
     next();
   } catch (err) {
     return res.status(500).json({
-      success: false,
       message: "Возникла непредвиденная ошибка на сервере!",
       err,
     });
