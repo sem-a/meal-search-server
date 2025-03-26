@@ -17,8 +17,8 @@ router.get("/", getAllRecipes);
 // api/recipes/get/:id
 router.get("/get/:id", getRecipeForId);
 
-// api/recipes/user/:id
-router.get("/user/:id", auth, getRecipesForUserId);
+// api/recipes/user/
+router.get("/user/", auth, getRecipesForUserId);
 
 // api/recipes/search
 router.get("/search", searchRecipes);

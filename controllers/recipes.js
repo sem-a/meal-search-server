@@ -50,18 +50,18 @@ const getRecipeForId = async (req, res) => {
 };
 
 /**
- * @route GET /api/recipes/user/:id
+ * @route GET /api/recipes/user/
  * @desc Получить рецепты пользователя
  * @access Public
  */
 
 const getRecipesForUserId = async (req, res) => {
-  const { id } = req.params;
+  const id = req.user.id;
 
   try {
     const recipes = await Recipe.find({ user: id });
 
-    if (recipes.length) {
+    if (recipes.length === 0) {
       return res.status(404).json({
         message: "Рецепты не найдены!",
       });
@@ -84,15 +84,17 @@ const getRecipesForUserId = async (req, res) => {
 const searchRecipes = async (req, res) => {
   const { params } = req.query;
 
-  const ingredients = params.replace(/\s/g, "").split(",");
+  let ingredients = null;
+
+  if (params) {
+    ingredients = params.replace(/\s/g, "").replace(/_/g, " ").split(",");
+  }
 
   try {
-    const query = {};
+    let query = {};
     if (ingredients && ingredients.length > 0) {
-      query.ingredients = {
-        $elemMatch: {
-          name: { $in: ingredients },
-        },
+      query = {
+        "ingredients.name": { $all: ingredients },
       };
     }
     const recipes = await Recipe.find(query);
@@ -115,7 +117,17 @@ const searchRecipes = async (req, res) => {
 const addRecipe = async (req, res) => {
   const { title, description, cuisine, ingredients, steps, photo } = req.body;
 
-  if (!title || !description || !cuisine || !ingredients || !steps || !photo) {
+  const id = req.user.id;
+
+  if (
+    !id ||
+    !title ||
+    !description ||
+    !cuisine ||
+    !ingredients ||
+    !steps ||
+    !photo
+  ) {
     return res
       .status(400)
       .json({ message: "Заполните все обязательные поля!" });
@@ -123,12 +135,19 @@ const addRecipe = async (req, res) => {
 
   try {
     const recipe = new Recipe({
-      title,
-      description,
-      cuisine,
-      ingredients,
-      steps,
-      photo,
+      title: title.toLowerCase(),
+      description: description.toLowerCase(),
+      cuisine: cuisine.toLowerCase(),
+      ingredients: ingredients.map((item) => {
+        return {
+          name: item.name.toLowerCase(),
+          quantity: item.quantity,
+          unit: item.unit,
+        };
+      }),
+      steps: steps.map((item) => item.toLowerCase()),
+      photo: photo.toLowerCase(),
+      user: id,
     });
 
     await recipe.save();
