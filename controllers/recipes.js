@@ -9,10 +9,7 @@ const getAllRecipes = async (req, res) => {
   try {
     const recipes = await Recipe.find();
 
-    return res.status(200).json({
-      message: "Рецепты успешно получены!",
-      recipes,
-    });
+    return res.status(200).json(recipes);
   } catch (err) {
     return res.status(500).json({
       message: "Возникла ошибка на сервере!",
@@ -53,6 +50,33 @@ const getRecipeForId = async (req, res) => {
 };
 
 /**
+ * @route GET /api/recipes/user/:id
+ * @desc Получить рецепты пользователя
+ * @access Public
+ */
+
+const getRecipesForUserId = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const recipes = await Recipe.find({ user: id });
+
+    if (recipes.length) {
+      return res.status(404).json({
+        message: "Рецепты не найдены!",
+      });
+    }
+
+    return res.status(200).json(recipes);
+  } catch (err) {
+    return res.status(500).json({
+      message: "Произошла ошибка на сервере!",
+      err: err.message,
+    });
+  }
+};
+
+/**
  * @route POST /api/recipes/search
  * @desc Искать рецепт
  * @access Public
@@ -73,10 +97,7 @@ const searchRecipes = async (req, res) => {
     }
     const recipes = await Recipe.find(query);
 
-    return res.status(200).json({
-      message: `Рецептов найдено: ${recipes.length}`,
-      recipes,
-    });
+    return res.status(200).json(recipes);
   } catch (err) {
     return res.status(500).json({
       message: "Возникла непредвиденная ошибка на сервере!",
@@ -126,7 +147,7 @@ const addRecipe = async (req, res) => {
 };
 
 /**
- * @route PUT /api/recipes/edit/:id
+ * @route PUT /api/recipes/edit?id
  * @desc Изменить рецепт
  * @access Public
  */
@@ -206,4 +227,5 @@ module.exports = {
   editRecipe,
   deleteRecipe,
   searchRecipes,
+  getRecipesForUserId,
 };
