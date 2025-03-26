@@ -7,7 +7,7 @@ const {
   editRecipe,
   deleteRecipe,
   searchRecipes,
-} = require("../controllers/recipe");
+} = require("../controllers/recipes");
 
 // api/recipes/
 router.get("/", getAllRecipes);
@@ -22,7 +22,7 @@ router.get("/search", searchRecipes);
 router.post("/add", addRecipe);
 
 // api/recipes/edit/:id
-router.put("/edit/:id", editRecipe);
+router.put("/edit", editRecipe);
 
 // api/recipes/delete/:id
 router.delete("/delete/:id", deleteRecipe);

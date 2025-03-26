@@ -22,7 +22,7 @@ const getAllRecipes = async (req, res) => {
 };
 
 /**
- * @route GET /api/recipes/:id
+ * @route GET /api/recipes/get/:id
  * @desc Получить рецепт по id
  * @access Public
  */
@@ -43,10 +43,7 @@ const getRecipeForId = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      message: "Рецепт успешно получен!",
-      recipes: recipe,
-    });
+    return res.status(200).json(recipe);
   } catch (err) {
     return res.status(500).json({
       message: "Возникла ошибка на сервере!",
@@ -61,13 +58,12 @@ const getRecipeForId = async (req, res) => {
  * @access Public
  */
 const searchRecipes = async (req, res) => {
-  const { cuisine, ingredients } = req.query;
+  const { params } = req.query;
+
+  const ingredients = params.replace(/\s/g, "").split(",");
 
   try {
     const query = {};
-    if (cuisine) {
-      query.cuisine = cuisine;
-    }
     if (ingredients && ingredients.length > 0) {
       query.ingredients = {
         $elemMatch: {
@@ -136,7 +132,7 @@ const addRecipe = async (req, res) => {
  */
 
 const editRecipe = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.query;
 
   const body = req.body;
 

@@ -7,7 +7,7 @@ const recipeSchema = new mongoose.Schema({
   ingredients: [
     {
       name: { type: String, required: true },
-      quantity: { type: Number, required: true },
+      quantity: { type: String, required: true },
       unit: { type: String, required: true },
     },
   ],
@@ -15,8 +15,16 @@ const recipeSchema = new mongoose.Schema({
   photo: { type: String },
 });
 
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+});
+
 const Recipe = mongoose.model("Recipe", recipeSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = {
   Recipe,
+  User,
 };
