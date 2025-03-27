@@ -19,7 +19,7 @@ jobs:
     - name: Установка Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '14'
+        node-version: '14'  # Укажите вашу версию Node.js
 
     - name: Установка зависимостей
       run: npm install
