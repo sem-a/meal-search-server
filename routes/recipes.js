@@ -7,7 +7,6 @@ const {
   editRecipe,
   deleteRecipe,
   searchRecipes,
-  getRecipesForUserId,
 } = require("../controllers/recipes");
 
 // api/recipes/
@@ -15,9 +14,6 @@ router.get("/", getAllRecipes);
 
 // api/recipes/get/:id
 router.get("/get/:id", getRecipeForId);
-
-// api/recipes/user/
-router.get("/user/", getRecipesForUserId);
 
 // api/recipes/search
 router.get("/search", searchRecipes);

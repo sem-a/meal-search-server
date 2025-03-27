@@ -50,33 +50,6 @@ const getRecipeForId = async (req, res) => {
 };
 
 /**
- * @route GET /api/recipes/user/
- * @desc Получить рецепты пользователя
- * @access Public
- */
-
-const getRecipesForUserId = async (req, res) => {
-  const id = req.user.id;
-
-  try {
-    const recipes = await Recipe.find({ user: id });
-
-    if (recipes.length === 0) {
-      return res.status(404).json({
-        message: "Рецепты не найдены!",
-      });
-    }
-
-    return res.status(200).json(recipes);
-  } catch (err) {
-    return res.status(500).json({
-      message: "Произошла ошибка на сервере!",
-      err: err.message,
-    });
-  }
-};
-
-/**
  * @route POST /api/recipes/search
  * @desc Искать рецепт
  * @access Public
@@ -178,7 +151,22 @@ const editRecipe = async (req, res) => {
       });
     }
 
-    Object.assign(recipe, body);
+    const data = {
+      title: body.title.toLowerCase(),
+      description: body.description.toLowerCase(),
+      cuisine: body.cuisine.toLowerCase(),
+      ingredients: body.ingredients.map((item) => {
+        return {
+          name: item.name.toLowerCase(),
+          quantity: item.quantity,
+          unit: item.unit,
+        };
+      }),
+      steps: body.steps.map((item) => item.toLowerCase()),
+      photo: body.photo.toLowerCase(),
+    };
+
+    Object.assign(recipe, data);
 
     await recipe.save();
 
@@ -216,7 +204,7 @@ const deleteRecipe = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
+    return res.status(204).json({
       message: "Рецепт успешно удален",
       recipes: recipe,
     });
@@ -235,5 +223,4 @@ module.exports = {
   editRecipe,
   deleteRecipe,
   searchRecipes,
-  getRecipesForUserId,
 };
