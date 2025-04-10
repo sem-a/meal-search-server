@@ -26,7 +26,7 @@ jobs:
       - name: Run server
         env:
           DB_URI: ${{ secrets.DB_URI }}
-        run: npm run server
+        run: npm run server &
 
       - name: stop server
         run: exit 1
