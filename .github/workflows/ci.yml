@@ -26,14 +26,10 @@ jobs:
       - name: Run server
         env:
           DB_URI: ${{ secrets.DB_URI }}
-        run: npm run server &
-      
-      - name: Stop server
-        run: |
-          echo "Stopping server..."
-          kill $(jobs -p)
+        run: npm run server
 
-
+      - name: stop server
+        run: exit 1
 
   test:
 
