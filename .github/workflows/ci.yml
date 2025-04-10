@@ -9,7 +9,16 @@ on:
       - main
 
 jobs:
-  build:
+
+  build: 
+    - name: Install dependencies
+      run: npm install
+
+    - name: Start Server
+      run: npm run server
+
+
+  test:
 
     runs-on: ubuntu-latest
 
