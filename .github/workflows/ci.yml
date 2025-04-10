@@ -28,6 +28,11 @@ jobs:
           DB_URI: ${{ secrets.DB_URI }}
         run: npm run server &
 
+      - name: Work
+        run: |
+        sleep 5
+        curl --fail http://localhost:3000 || exit 1
+
       - name: stop server
         run: exit 0
 
