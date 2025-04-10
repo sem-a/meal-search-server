@@ -11,11 +11,12 @@ on:
 jobs:
 
   build: 
-    - name: Install dependencies
-      run: npm install
+    steps: 
+      - name: Install dependencies
+        run: npm install
 
-    - name: Start Server
-      run: npm run server
+      - name: Start Server
+        run: npm run server
 
 
   test:
