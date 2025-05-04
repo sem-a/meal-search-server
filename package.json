@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "server": "nodemon ./bin/www",
     "test": "jest"
   },
   "dependencies": {
@@ -19,8 +18,7 @@
     "jade": "~1.11.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
-    "morgan": "~1.9.1",
-    "nodemon": "^3.1.9"
+    "morgan": "~1.9.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",
