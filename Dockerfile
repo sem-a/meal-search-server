@@ -7,7 +7,7 @@ RUN npm install
 
 COPY . .
 
-CMD ["npm i"],
+CMD ["npm i"]
 
 CMD ["nodemon", "/bin/www"]
 
