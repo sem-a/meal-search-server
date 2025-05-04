@@ -7,5 +7,5 @@ RUN npm install
 
 COPY . .
 
-CMD ["node", "/bin/www"]
+CMD ["npm", "start"]
 
