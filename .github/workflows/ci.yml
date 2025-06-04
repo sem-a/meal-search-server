@@ -114,6 +114,7 @@ jobs:
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@master
         env:
+          DB_URI: ${{ secrets.DB_URI }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
