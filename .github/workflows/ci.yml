@@ -1,4 +1,4 @@
-name: CI
+name: CI (Server)
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '22' 
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install
@@ -29,16 +29,36 @@ jobs:
           DB_URI: ${{ secrets.DB_URI }}
         run: npm run start &
 
-      - name: Work
+      - name: Health check
         run: sleep 5 & curl --fail http://localhost:3000/api/recipes || exit 1
 
-      - name: stop server
-        run: exit 0
+      - name: Notify Telegram (Server Build Success)
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=✅ [SERVER] Build successful%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}%0A🌐 Health check passed"
+
+      - name: Notify Telegram (Server Build Failed)
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=❌ [SERVER] Build failed%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}%0A💡 Check build logs"
 
   test:
-
     runs-on: ubuntu-latest
     needs: build
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout code
@@ -47,15 +67,30 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '22' 
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install
 
       - name: Run tests
         env:
-          DB_URI: ${{ secrets.DB_URI }}
-        run: npm test
+          DB_URI: mongodb://localhost:27017/meal-search-test
+        run: npm test -- --coverage --detectOpenHandles
+
+      - name: Notify Telegram (Server Tests Success)
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=✅ [SERVER] Tests passed%0A%0A📌 Branch: ${{ github.ref }}%0A📊 Coverage: $(grep -c '^DA:' coverage/lcov.info || echo 'N/A') lines"
+
+      - name: Notify Telegram (Server Tests Failed)
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=❌ [SERVER] Tests failed%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}%0A🔍 Check test logs"
+
   sonarqube:
     name: SonarQube Scan
     runs-on: ubuntu-latest
@@ -85,47 +120,67 @@ jobs:
           args: >
             -Dsonar.qualitygate.wait=true
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-        
+
+      - name: Notify Telegram (Server SonarQube Analysis)
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=📊 [SERVER] SonarQube analysis completed%0A%0A📌 Branch: ${{ github.ref }}%0A🔗 View report: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
   push_to_registry:
-        name: docker
-        runs-on: ubuntu-latest
-        needs: sonarqube
-        permissions:
-          packages: write
-          contents: read
-          attestations: write
-          id-token: write
-        steps:
-          - name: Check out the repo
-            uses: actions/checkout@v4
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: sonarqube
+    permissions:
+      packages: write
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
     
-          - name: Log in to Docker Hub
-            uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
-            with:
-              username: ${{ secrets.DOCKER_USERNAME }}
-              password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
     
-          - name: Extract metadata (tags, labels) for Docker
-            id: meta
-            uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-            with:
-              images: sema03/meal-search-server
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: sema03/meal-search-server
     
-          - name: Build and push Docker image
-            id: push
-            uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
-            with:
-              context: .
-              file: ./Dockerfile
-              push: true
-              tags: ${{ steps.meta.outputs.tags }}
-              labels: ${{ steps.meta.outputs.labels }}
-              build-args: |
-                DB_URI=${{ secrets.DB_URI }}
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            DB_URI=${{ secrets.DB_URI }}
     
-          - name: Generate artifact attestation
-            uses: actions/attest-build-provenance@v2
-            with:
-              subject-name: index.docker.io/sema03/meal-search-server
-              subject-digest: ${{ steps.push.outputs.digest }}
-              push-to-registry: true
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: index.docker.io/sema03/meal-search-server
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Notify Telegram (Server Docker Push Success)
+        if: success()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=🐳 [SERVER] Docker image pushed%0A%0A📦 Image: sema03/meal-search-server:${{ steps.meta.outputs.version }}%0A🔗 View: https://hub.docker.com/r/sema03/meal-search-server"
+
+      - name: Notify Telegram (Server Docker Push Failed)
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=❌ [SERVER] Docker push failed%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}%0A🔍 Check build logs"
