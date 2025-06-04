@@ -95,6 +95,17 @@ jobs:
     name: SonarQube Scan
     runs-on: ubuntu-latest
     needs: test
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -108,13 +119,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run Test Coverage
-        run: npm test -- --coverage
+      - name: Run tests
+        env:
+          DB_URI: mongodb://localhost:27017/meal-search-test
+        run: npm test -- --coverage --detectOpenHandles
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@master
         env:
-          DB_URI: ${{ secrets.DB_URI }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
