@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meal-search-front
+  labels:
+    app: meal-search
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meal-search-front
+  template:
+    metadata:
+      labels:
+        app: meal-search-front
+    spec:
+      containers:
+      - name: front
+        image: sema03/meal-search-front:main
+        ports:
+        - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meal-search-server
+  labels:
+    app: meal-search
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meal-search-server
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "80" 
+        prometheus.io/path: "/metrics"
+      labels:
+        app: meal-search-server
+    spec:
+      containers:
+      - name: server
+        image: sema03/meal-search-server:main
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_URI
+          value: "mongodb://gen_user:%3Fqm%5C%7BsNj5E%26e%3C2@217.25.94.181:27017/default_db?authSource=admin&directConnection=true"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
