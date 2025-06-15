@@ -216,29 +216,26 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
           kubectl cluster-info
 
-      - name: Update Kubernetes deployment
+      - name: Deploy to Kubernetes
         run: |
-          # Обновляем image в deployment
-          kubectl set image deployment/meal-search-server meal-search-server=sema03/meal-search-server:${{ steps.meta.outputs.version }} -n meal-search
-          # Проверяем статус обновления
-          kubectl rollout status deployment/meal-search-server -n meal-search --timeout=3m
+          kubectl apply -f k8s/deployment.yaml -n default
+          kubectl apply -f k8s/service.yaml -n default
 
-      - name: Verify service
+      - name: Get Service URL
+        id: service
         run: |
-          kubectl get pods -n meal-search
-          kubectl get svc -n meal-search
+          echo "url=http://$(kubectl get svc my-app -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_OUTPUT
 
       - name: Notify Telegram (Deploy Success)
         if: success()
         run: |
-          SERVICE_URL=$(kubectl get svc meal-search-server -n meal-search -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d "text=🚀 [SERVER] Deployed to Kubernetes%0A%0A📌 Branch: ${{ github.ref }}%0A🐳 Image: sema03/meal-search-server:${{ steps.meta.outputs.version }}%0A🌐 Service URL: http://$SERVICE_URL:3000"
+          -d "text=🚀 DEPLOY SUCCESSFUL%0A%0A📌 Branch: ${{ github.ref }}%0A🌐 Service URL: ${{ steps.service.outputs.url }}"
 
       - name: Notify Telegram (Deploy Failed)
         if: failure()
         run: |
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d "text=❌ [SERVER] Kubernetes deploy failed%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}%0A🔍 Check deploy logs"
+          -d "text=❌ DEPLOY FAILED%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}"Ï
