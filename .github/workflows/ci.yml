@@ -19,11 +19,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
-        
+
       - name: Run server
         env:
           DB_URI: ${{ secrets.DB_URI }}
@@ -67,7 +67,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -114,7 +114,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install dependencies
         run: npm install
@@ -152,19 +152,19 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-    
+
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-    
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
           images: sema03/meal-search-server
-    
+
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
@@ -176,7 +176,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             DB_URI=${{ secrets.DB_URI }}
-    
+
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
@@ -197,3 +197,48 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
           -d "text=❌ [SERVER] Docker push failed%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}%0A🔍 Check build logs"
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: push_to_registry
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "latest"
+
+      - name: Configure Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+          kubectl cluster-info
+
+      - name: Update Kubernetes deployment
+        run: |
+          # Обновляем image в deployment
+          kubectl set image deployment/meal-search-server meal-search-server=sema03/meal-search-server:${{ steps.meta.outputs.version }} -n meal-search
+          # Проверяем статус обновления
+          kubectl rollout status deployment/meal-search-server -n meal-search --timeout=3m
+
+      - name: Verify service
+        run: |
+          kubectl get pods -n meal-search
+          kubectl get svc -n meal-search
+
+      - name: Notify Telegram (Deploy Success)
+        if: success()
+        run: |
+          SERVICE_URL=$(kubectl get svc meal-search-server -n meal-search -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=🚀 [SERVER] Deployed to Kubernetes%0A%0A📌 Branch: ${{ github.ref }}%0A🐳 Image: sema03/meal-search-server:${{ steps.meta.outputs.version }}%0A🌐 Service URL: http://$SERVICE_URL:3000"
+
+      - name: Notify Telegram (Deploy Failed)
+        if: failure()
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d "text=❌ [SERVER] Kubernetes deploy failed%0A%0A📌 Branch: ${{ github.ref }}%0A🔄 Workflow: ${{ github.workflow }}%0A🔍 Check deploy logs"
