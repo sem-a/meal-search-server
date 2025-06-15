@@ -1,28 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: meal-search-front
-  labels:
-    app: meal-search
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: meal-search-front
-  template:
-    metadata:
-      labels:
-        app: meal-search-front
-    spec:
-      containers:
-      - name: front
-        image: sema03/meal-search-front:main
-        ports:
-        - containerPort: 80
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
   name: meal-search-server
   labels:
     app: meal-search
