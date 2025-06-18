@@ -7,6 +7,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
+app.disable('x-powered-by');
 
 app.use(cors());
 app.use(logger("dev"));
