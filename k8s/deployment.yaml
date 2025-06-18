@@ -25,7 +25,7 @@ spec:
         - containerPort: 3000
         env:
         - name: DB_URI
-          value: "mongodb://gen_user:%3Fqm%5C%7BsNj5E%26e%3C2@217.25.94.181:27017/default_db?authSource=admin&directConnection=true"
+          value: "mongodb://gen_user:c%5C_l2IZF%2FHGdVf@94.241.170.67:27017/default_db?authSource=admin&directConnection=true"
         resources:
           requests:
             cpu: "100m"
