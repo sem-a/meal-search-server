@@ -223,8 +223,9 @@ jobs:
         run: |
           kubectl apply -f k8s/deployment.yaml -n default
           kubectl apply -f k8s/service.yaml -n default
-          kubectl set image deployment/your-app your-app=sema03/meal-search-server:${{ github.sha }} -n default
-          kubectl rollout status deployment/your-app -n default
+          kubectl set image deployment/meal-search-server meal-search-server=sema03/meal-search-server:${{ github.sha }} -n default
+          kubectl rollout status deployment/meal-search-server -n default
+          echo "url=http://$(kubectl get svc backend-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_OUTPUT
 
       - name: Get Service URL
         id: service
