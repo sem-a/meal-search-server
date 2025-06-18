@@ -168,12 +168,14 @@ jobs:
 
       - name: Build and push Docker image
         id: push
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@v4
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            sema03/meal-search-server:latest
+            sema03/meal-search-server:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             DB_URI=${{ secrets.DB_URI }}
@@ -221,6 +223,8 @@ jobs:
         run: |
           kubectl apply -f k8s/deployment.yaml -n default
           kubectl apply -f k8s/service.yaml -n default
+          kubectl set image deployment/your-app your-app=sema03/meal-search-server:${{ github.sha }} -n default
+          kubectl rollout status deployment/your-app -n default
 
       - name: Get Service URL
         id: service
